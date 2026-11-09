@@ -287,7 +287,7 @@ export function BagsScreen() {
                 key={`${s.list}-${s.label}`}
                 type="button"
                 onClick={() => addBagItem(s.list, s.label)}
-                className="min-h-10 rounded-full bg-surface px-3.5 text-[15px] font-medium"
+                className="min-h-11 rounded-full bg-surface px-3.5 text-[15px] font-medium"
               >
                 {s.label}
               </button>
@@ -335,6 +335,8 @@ export function BagsScreen() {
       <div className="grid grid-cols-2 gap-2">
         <a
           href={hospitalTel ?? "#"}
+          aria-disabled={!hospitalTel ? true : undefined}
+          tabIndex={!hospitalTel ? -1 : undefined}
           className={cn(
             "flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-action text-[16px] font-semibold text-action-fg",
             !hospitalTel && "pointer-events-none opacity-40",
@@ -345,6 +347,8 @@ export function BagsScreen() {
         </a>
         <a
           href={midwifeTel ?? "#"}
+          aria-disabled={!midwifeTel ? true : undefined}
+          tabIndex={!midwifeTel ? -1 : undefined}
           className={cn(
             "flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-raised text-[16px] font-semibold",
             !midwifeTel && "pointer-events-none opacity-40",

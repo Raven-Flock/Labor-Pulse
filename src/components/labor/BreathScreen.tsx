@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { useEffect, useId, useState } from "react";
 import { BREATH_BY_STAGE, BREATH_FOOTER, BREATH_META, STAGE_HEADERS } from "@/lib/labor/copy";
 import { practicePhase } from "@/lib/labor/engine";
 import { formatDuration, formatElapsed } from "@/lib/labor/format";
@@ -6,7 +7,19 @@ import { useLaborStore } from "@/lib/labor/store";
 import { usePeakArchitect } from "@/lib/labor/use-peak";
 import type { BreathPattern } from "@/lib/labor/types";
 import { cn } from "@/lib/utils";
-import { ModeSlider } from "./primitives";
+import { ModeSlider, Toggle } from "./primitives";
+
+function useEffectiveReduce(appReduce: boolean) {
+  const [osReduce, setOsReduce] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const apply = () => setOsReduce(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+  return appReduce || osReduce;
+}
 
 export function BreathScreen({ now }: { now: number }) {
   const breathArmed = useLaborStore((s) => s.breathArmed);
@@ -20,14 +33,19 @@ export function BreathScreen({ now }: { now: number }) {
   const pushMode = useLaborStore((s) => s.pushMode);
   const setPushMode = useLaborStore((s) => s.setPushMode);
   const session = useLaborStore((s) => s.session);
+  const settings = useLaborStore((s) => s.settings);
   const setPractice = useLaborStore((s) => s.setPractice);
   const waves = useLaborStore((s) => s.waves);
+  const reduceMotion = useEffectiveReduce(settings.reduceMotion);
+  const armId = useId();
+  const pushId = useId();
   const { pattern, phase, scale, line } = usePeakArchitect(now);
 
   const restHold = pattern === "rest-between";
   const practice = practiceAt && !restHold ? practicePhase(now - practiceAt) : null;
   const ringPhase = restHold ? "rest" : (practice?.phase ?? phase);
   const ringScale = restHold ? 0.36 : (practice?.scale ?? scale);
+  const shownScale = reduceMotion ? 1 : ringScale;
   const live = Boolean(liveWave);
   const last = waves.filter((w) => w.end != null).at(-1);
   const sinceLast =
@@ -108,12 +126,12 @@ export function BreathScreen({ now }: { now: number }) {
         <div
           className={cn(
             "motion-ring absolute inset-0 rounded-full border-2 border-ease/50",
-            ringPhase === "peak" && "is-peak",
+            !reduceMotion && ringPhase === "peak" && "is-peak",
           )}
           style={
             {
-              "--ring-scale": ringScale,
-              transform: `scale(${ringScale})`,
+              "--ring-scale": shownScale,
+              transform: `scale(${shownScale})`,
             } as CSSProperties
           }
         />
@@ -147,50 +165,40 @@ export function BreathScreen({ now }: { now: number }) {
         </p>
       )}
 
-      <label className="flex items-center justify-between gap-3 rounded-2xl bg-surface px-4 py-4">
-        <span className="text-[17px] font-medium">Breathe with this wave</span>
-        <button
-          type="button"
-          role="switch"
-          aria-checked={breathArmed}
-          onClick={() => armBreath(!breathArmed)}
-          className={cn(
-            "relative h-8 w-14 rounded-full p-1",
-            breathArmed ? "bg-action" : "bg-raised",
-          )}
-        >
-          <span
-            className={cn(
-              "block size-6 rounded-full",
-              breathArmed ? "translate-x-6 bg-action-fg" : "bg-muted",
-            )}
-          />
-        </button>
-      </label>
+      <div
+        className="flex items-center justify-between gap-3 rounded-2xl bg-surface px-4 py-3"
+        onClick={() => armBreath(!breathArmed)}
+      >
+        <span id={armId} className="text-[17px] font-medium">
+          Breathe with this wave
+        </span>
+        <Toggle
+          labelledBy={armId}
+          label="Breathe with this wave"
+          checked={breathArmed}
+          onChange={armBreath}
+        />
+      </div>
 
-      <div className="rounded-2xl bg-surface px-4 py-4">
-        <div className="flex items-center justify-between gap-3">
+      <div className="rounded-2xl bg-surface px-4 py-3">
+        <div
+          className="flex items-center justify-between gap-3"
+          onClick={() => setPushMode(!pushMode)}
+        >
           <div>
-            <p className="text-[17px] font-medium">Push mode</p>
+            <p id={pushId} className="text-[17px] font-medium">
+              Push mode
+            </p>
             <p className="mt-1 text-[15px] text-muted">
               Unlocks open-glottis. Locked until you’ve been told to push.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => setPushMode(!pushMode)}
-            className={cn(
-              "relative h-8 w-14 shrink-0 rounded-full p-1",
-              pushMode ? "bg-action" : "bg-raised",
-            )}
-          >
-            <span
-              className={cn(
-                "block size-6 rounded-full",
-                pushMode ? "translate-x-6 bg-action-fg" : "bg-muted",
-              )}
-            />
-          </button>
+          <Toggle
+            labelledBy={pushId}
+            label="Push mode"
+            checked={pushMode}
+            onChange={setPushMode}
+          />
         </div>
       </div>
 

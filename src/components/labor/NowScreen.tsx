@@ -1,5 +1,5 @@
 import { STAGE_BLURB } from "@/lib/labor/copy";
-import { formatDuration, formatInterval } from "@/lib/labor/format";
+import { formatClock, formatDuration, formatInterval } from "@/lib/labor/format";
 import { useLaborStore } from "@/lib/labor/store";
 import { usePeakArchitect } from "@/lib/labor/use-peak";
 import { BatteryCharging } from "lucide-react";
@@ -22,6 +22,11 @@ export function NowScreen({ now }: { now: number }) {
   const completed = waves.filter((w) => w.end != null);
   const last = completed.at(-1);
   const empty = completed.length === 0;
+  const spark = waves.filter((w) => w.duration != null).slice(-8);
+  const hourSet = waves.filter((w) => w.start >= now - 60 * 60_000 && w.duration != null);
+  const recentById = new Map(spark.map((w) => [w.id, w]));
+  for (const w of hourSet) recentById.set(w.id, w);
+  const recentWaves = [...recentById.values()].sort((a, b) => a.start - b.start);
   const showBattery =
     Boolean(session.laborStartedAt) && !session.batteryWarnedAt && !session.practiceOnly;
   const maybeReal = stage.stage === "early" || stage.stage === "active" || stage.stage === "transition";
@@ -100,7 +105,7 @@ export function NowScreen({ now }: { now: number }) {
           <button
             type="button"
             onClick={startPracticeBreath}
-            className="self-start text-[17px] text-ease"
+            className="inline-flex min-h-11 min-w-11 items-center self-start text-[17px] text-ease"
           >
             Practice a breath
           </button>
@@ -115,8 +120,16 @@ export function NowScreen({ now }: { now: number }) {
             <Stat label="Last 5 interval" value={formatInterval(avgs.last5.interval)} />
             <Stat label="Last 5 duration" value={formatDuration(avgs.last5.duration)} />
           </div>
-          <Sparkline waves={waves} />
-          <HourGraph waves={waves} hours={1} />
+          <Sparkline waves={waves} decorative />
+          <HourGraph waves={waves} hours={1} decorative />
+          <ul className="sr-only" aria-label="Recent waves">
+            {recentWaves.map((w) => (
+              <li key={w.id}>
+                {formatClock(w.start)} · {formatDuration(w.duration)}
+                {w.isPractice ? " · practice" : ""}
+              </li>
+            ))}
+          </ul>
         </>
       )}
 

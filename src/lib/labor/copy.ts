@@ -13,7 +13,7 @@ export const DISCLAIMER =
   "Timing is a pattern guess. Dilation, water, bleeding, and baby movement matter more. Call your midwife or hospital if anything feels wrong.";
 
 export const LOG_PRIVACY =
-  "Logs live on this phone. Nothing is sent unless you share a card or pair a partner.";
+  "Logs live on this phone. Nothing is sent unless you share a card.";
 
 export const STAGE_BLURB: Record<SuggestedStage, { name: string; feel: string }> = {
   "need-more": {

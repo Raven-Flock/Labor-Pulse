@@ -13,6 +13,7 @@
   --color-ease-fg: #0e1614;
   --color-alert: #d97a63;
   --color-alert-fg: #1c100c;
+  --color-hairline-strong: #6b7385;
   --font-sans: "Figtree", ui-rounded, system-ui, sans-serif;
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -76,37 +77,75 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html:not([data-motion="on"]) *,
-  html:not([data-motion="on"]) *::before,
-  html:not([data-motion="on"]) *::after {
+  html *,
+  html *::before,
+  html *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+
+  .motion-ring {
+    transform: scale(1) !important;
+    animation: none !important;
+    transition: none !important;
+    opacity: 1 !important;
+  }
+}
+
+html[data-reduce-motion="on"] *,
+html[data-reduce-motion="on"] *::before,
+html[data-reduce-motion="on"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
 }
 
 html[data-reduce-motion="on"] .motion-ring {
-  transition: none !important;
+  transform: scale(1) !important;
   animation: none !important;
+  transition: none !important;
+  opacity: 1 !important;
 }
 
-html[data-reduce-motion="off"] .motion-ring {
-  transition: transform 550ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-html[data-reduce-motion="off"] .motion-ring.is-peak {
-  animation: peak-hold 1400ms ease-in-out infinite;
-}
-
-@keyframes peak-hold {
-  0%,
-  100% {
-    transform: scale(var(--ring-scale, 1));
+@media (prefers-reduced-motion: no-preference) {
+  html[data-reduce-motion="off"] .motion-ring {
+    transition: transform 550ms cubic-bezier(0.22, 1, 0.36, 1);
   }
-  50% {
-    transform: scale(calc(var(--ring-scale, 1) * 1.04));
+
+  html[data-reduce-motion="off"] .motion-ring.is-peak {
+    animation: peak-hold 1400ms ease-in-out infinite;
   }
+
+  @keyframes peak-hold {
+    0%,
+    100% {
+      transform: scale(var(--ring-scale, 1));
+    }
+    50% {
+      transform: scale(calc(var(--ring-scale, 1) * 1.04));
+    }
+  }
+}
+
+:where(button, a, [role="button"], [role="switch"], input, select, textarea, summary):focus-visible {
+  outline-style: solid;
+  outline-width: 2px;
+  outline-color: var(--color-action);
+  outline-offset: 2px;
+}
+
+.mode-slider:focus-visible {
+  outline-style: solid;
+  outline-width: 2px;
+  outline-color: var(--color-action);
+  outline-offset: 4px;
+}
+
+[data-tone="alert"] :focus-visible {
+  outline-color: var(--color-alert-fg);
 }
 
 .phone-shell {
@@ -134,11 +173,18 @@ html[data-reduce-motion="off"] .motion-ring.is-peak {
   appearance: none;
   display: block;
   width: 100%;
+  height: 2.75rem;
+  margin: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.mode-slider::-webkit-slider-runnable-track {
   height: 2rem;
   border-radius: 999px;
   background: var(--color-raised);
-  box-shadow: 0 0 0 1px var(--color-hairline);
-  outline: none;
+  box-shadow: 0 0 0 1px var(--color-hairline-strong);
 }
 
 .mode-slider::-webkit-slider-thumb {
@@ -146,6 +192,7 @@ html[data-reduce-motion="off"] .motion-ring.is-peak {
   appearance: none;
   width: 2.75rem;
   height: 2.75rem;
+  margin-top: -0.375rem;
   border-radius: 999px;
   background: var(--color-action);
   box-shadow: 0 0 0 2px var(--color-action-fg);
@@ -164,6 +211,8 @@ html[data-reduce-motion="off"] .motion-ring.is-peak {
 
 .mode-slider::-moz-range-track {
   height: 2rem;
+  border: 0;
   border-radius: 999px;
   background: var(--color-raised);
+  box-shadow: 0 0 0 1px var(--color-hairline-strong);
 }
