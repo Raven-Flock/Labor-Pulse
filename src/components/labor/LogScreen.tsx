@@ -39,7 +39,7 @@ export function LogScreen() {
           type="button"
           onClick={() => setHours(1)}
           className={cn(
-            "min-h-10 rounded-xl px-3 text-[15px]",
+            "min-h-11 rounded-xl px-3 text-[15px]",
             hours === 1 ? "bg-raised" : "text-muted",
           )}
         >
@@ -49,14 +49,14 @@ export function LogScreen() {
           type="button"
           onClick={() => setHours(6)}
           className={cn(
-            "min-h-10 rounded-xl px-3 text-[15px]",
+            "min-h-11 rounded-xl px-3 text-[15px]",
             hours === 6 ? "bg-raised" : "text-muted",
           )}
         >
           6 hours
         </button>
       </div>
-      <HourGraph waves={waves} hours={hours} />
+      <HourGraph waves={waves} hours={hours} decorative />
 
       {flags.length > 0 ? (
         <ul className="flex flex-col gap-1 text-[15px] text-alert">

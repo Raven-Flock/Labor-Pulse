@@ -1,25 +1,39 @@
 import { cn } from "@/lib/utils";
 import type { Wave } from "@/lib/labor/types";
 
-export function Sparkline({ waves }: { waves: Wave[] }) {
+export function Sparkline({
+  waves,
+  decorative = false,
+}: {
+  waves: Wave[];
+  decorative?: boolean;
+}) {
   const last = waves.filter((w) => w.duration != null).slice(-8);
   if (last.length === 0) {
-    return <div className="h-16 rounded-xl bg-surface" />;
+    return (
+      <div
+        className="h-16 rounded-xl bg-surface"
+        {...(decorative ? { "aria-hidden": true as const } : {})}
+      />
+    );
   }
   const max = Math.max(60_000, ...last.map((w) => w.duration ?? 0));
   return (
-    <div className="flex h-16 items-end gap-1.5 rounded-xl bg-surface px-3 py-2">
+    <div
+      className="flex h-16 items-end gap-1.5 rounded-xl bg-surface px-3 py-2"
+      {...(decorative ? { "aria-hidden": true as const } : {})}
+    >
       {last.map((w) => {
-        const h = Math.max(6, ((w.duration ?? 0) / max) * 100);
+        const h = Math.max(8, ((w.duration ?? 0) / max) * 100);
         return (
           <div
             key={w.id}
             className={cn(
-              "flex-1 rounded-sm",
-              w.isPractice ? "bg-hairline" : "bg-action/80",
+              "min-h-2 flex-1 rounded-sm",
+              w.isPractice ? "box-border border-2 border-muted bg-transparent" : "bg-action/80",
             )}
             style={{ height: `${h}%` }}
-            title={`${Math.round((w.duration ?? 0) / 1000)}s`}
+            {...(decorative ? {} : { title: `${Math.round((w.duration ?? 0) / 1000)}s` })}
           />
         );
       })}
@@ -30,9 +44,11 @@ export function Sparkline({ waves }: { waves: Wave[] }) {
 export function HourGraph({
   waves,
   hours,
+  decorative = false,
 }: {
   waves: Wave[];
   hours: 1 | 6;
+  decorative?: boolean;
 }) {
   const now = Date.now();
   const span = hours * 60 * 60_000;
@@ -46,8 +62,13 @@ export function HourGraph({
     <svg
       viewBox={`0 0 ${width} ${height}`}
       className="h-24 w-full rounded-xl bg-surface"
-      role="img"
-      aria-label={`Waves over the last ${hours} hour${hours > 1 ? "s" : ""}`}
+      focusable={decorative ? "false" : undefined}
+      {...(decorative
+        ? { "aria-hidden": true as const }
+        : {
+            role: "img" as const,
+            "aria-label": `Waves over the last ${hours} hour${hours > 1 ? "s" : ""}`,
+          })}
     >
       {[0.25, 0.5, 0.75].map((g) => (
         <line
@@ -62,7 +83,22 @@ export function HourGraph({
       ))}
       {data.map((w) => {
         const x = 12 + ((w.start - from) / span) * (width - 24);
-        const h = Math.max(4, ((w.duration ?? 0) / maxDur) * (height - 16));
+        const h = Math.max(8, ((w.duration ?? 0) / maxDur) * (height - 16));
+        if (w.isPractice) {
+          return (
+            <rect
+              key={w.id}
+              x={x - 2}
+              y={height - 8 - h + 1}
+              width={4}
+              height={h - 2}
+              rx={1}
+              fill="none"
+              stroke="var(--color-muted)"
+              strokeWidth={2}
+            />
+          );
+        }
         return (
           <rect
             key={w.id}
@@ -71,7 +107,8 @@ export function HourGraph({
             width={6}
             height={h}
             rx={1.5}
-            fill={w.isPractice ? "#2A3140" : "#E8C39A"}
+            fill="var(--color-action)"
+            fillOpacity={0.8}
           />
         );
       })}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DISCLAIMER, FLAG_LABEL, STAGE_BLURB } from "@/lib/labor/copy";
 import { averages, lastHourStats } from "@/lib/labor/engine";
 import {
@@ -327,37 +327,133 @@ export function CallNowModal() {
   const leavingNow = useLaborStore((s) => s.leavingNow);
   const setTab = useLaborStore((s) => s.setTab);
   const reason = call.reason;
+  const open = call.open && Boolean(reason);
   const dismissible =
     reason !== "bleeding" && reason !== "water" && reason !== "movement";
 
   const hospital = telHref(settings.contacts.hospital);
   const midwife = telHref(settings.contacts.midwife);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
 
-  if (!call.open || !reason) return null;
+  useEffect(() => {
+    if (!open) return;
+    const root = dialogRef.current;
+    const previously =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const inerted: HTMLElement[] = [];
+    const parent = root?.parentElement;
+    if (parent && root) {
+      for (const child of Array.from(parent.children)) {
+        if (child !== root && child instanceof HTMLElement && !child.inert) {
+          child.inert = true;
+          inerted.push(child);
+        }
+      }
+    }
+    titleRef.current?.focus();
+
+    const onKey = (e: KeyboardEvent) => {
+      if (!root) return;
+      if (e.key === "Escape") {
+        e.preventDefault();
+        closeCall();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const focusables = [
+        ...root.querySelectorAll<HTMLElement>(
+          "a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled])",
+        ),
+      ].filter((el) => el.getAttribute("aria-disabled") !== "true");
+      if (focusables.length === 0) {
+        e.preventDefault();
+        titleRef.current?.focus();
+        return;
+      }
+      const first = focusables[0]!;
+      const last = focusables[focusables.length - 1]!;
+      const active = document.activeElement;
+      if (e.shiftKey) {
+        if (active === first || active === titleRef.current || !root.contains(active)) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else if (active === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      for (const el of inerted) el.inert = false;
+      if (previously && document.contains(previously)) {
+        previously.focus();
+      } else {
+        const heading = document.querySelector<HTMLElement>("main h1, h1");
+        if (heading) {
+          if (!heading.hasAttribute("tabindex")) heading.tabIndex = -1;
+          heading.focus();
+        }
+      }
+    };
+  }, [open, closeCall]);
+
+  if (!open || !reason) return null;
+
+  const missingContact = !hospital || !midwife;
 
   return (
-    <div className="absolute inset-0 z-50 flex flex-col bg-alert px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] text-alert-fg">
+    <div
+      ref={dialogRef}
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="call-now-title"
+      data-tone="alert"
+      className="absolute inset-0 z-50 flex flex-col overflow-y-auto bg-alert px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] text-alert-fg"
+    >
       <CallAlertFire />
       <p className="text-[13px] font-medium uppercase tracking-[0.16em]">Call now</p>
-      <h1 className="mt-3 text-[2rem] font-semibold leading-tight tracking-tight">
+      <h1
+        id="call-now-title"
+        ref={titleRef}
+        tabIndex={-1}
+        className="mt-3 text-[2rem] font-semibold leading-tight tracking-tight"
+      >
         {CALL_COPY[reason]}
       </h1>
       <p className="mt-6 text-[18px] leading-relaxed">
         {triageScript(settings, flags, waves, session)}
       </p>
-      <div className="mt-auto flex flex-col gap-2">
-        <a
-          href={hospital ?? "#"}
-          className="flex min-h-14 items-center justify-center rounded-2xl bg-alert-fg text-[18px] font-semibold text-alert"
-        >
-          Call hospital
-        </a>
-        <a
-          href={midwife ?? "#"}
-          className="flex min-h-14 items-center justify-center rounded-2xl bg-alert-fg/15 text-[18px] font-semibold"
-        >
-          Call midwife
-        </a>
+      <div className="mt-auto flex flex-col gap-2 pt-6">
+        {hospital ? (
+          <a
+            href={hospital}
+            className="flex min-h-14 items-center justify-center rounded-2xl bg-alert-fg text-[18px] font-semibold text-alert"
+          >
+            Call hospital
+          </a>
+        ) : (
+          <p className="flex min-h-11 items-center justify-center text-center text-[18px] font-medium">
+            Hospital number not set
+          </p>
+        )}
+        {midwife ? (
+          <a
+            href={midwife}
+            className="flex min-h-14 items-center justify-center rounded-2xl bg-alert-fg/15 text-[18px] font-semibold"
+          >
+            Call midwife
+          </a>
+        ) : (
+          <p className="flex min-h-11 items-center justify-center text-center text-[18px] font-medium">
+            Midwife number not set
+          </p>
+        )}
+        {missingContact ? (
+          <p className="text-center text-[15px]">Add contact numbers in Settings.</p>
+        ) : null}
         <button
           type="button"
           onClick={() => {

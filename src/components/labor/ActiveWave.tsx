@@ -9,6 +9,18 @@ import { cn } from "@/lib/utils";
 import { ChevronUp } from "lucide-react";
 import { GiantCircle } from "./primitives";
 
+function useEffectiveReduce(appReduce: boolean) {
+  const [osReduce, setOsReduce] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const apply = () => setOsReduce(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+  return appReduce || osReduce;
+}
+
 export function ActiveWave({ now }: { now: number }) {
   const live = useLaborStore((s) => s.liveWave);
   const closing = useLaborStore((s) => s.closing);
@@ -28,6 +40,7 @@ export function ActiveWave({ now }: { now: number }) {
   const pinnedPosition = useLaborStore((s) => s.pinnedPosition);
   const lastPositionAt = useLaborStore((s) => s.lastPositionAt);
   const touchPref = settings.touchPref;
+  const reduceMotion = useEffectiveReduce(settings.reduceMotion);
   const { elapsed, phase, scale, line, sinceEnd } = usePeakArchitect(now);
 
   const [dim, setDim] = useState(false);
@@ -167,12 +180,12 @@ export function ActiveWave({ now }: { now: number }) {
             <div
               className={cn(
                 "motion-ring absolute inset-0 rounded-full border-2 border-action/45",
-                phase === "peak" && "is-peak",
+                !reduceMotion && phase === "peak" && "is-peak",
               )}
               style={
                 {
-                  "--ring-scale": scale,
-                  transform: `scale(${scale})`,
+                  "--ring-scale": reduceMotion ? 1 : scale,
+                  transform: `scale(${reduceMotion ? 1 : scale})`,
                 } as CSSProperties
               }
             />
@@ -188,7 +201,7 @@ export function ActiveWave({ now }: { now: number }) {
       <div
         className={cn(
           "chrome mt-auto flex flex-col items-center home-pad",
-          dim && "opacity-40",
+          dim && "opacity-80",
         )}
       >
         {panel ? (

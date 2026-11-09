@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { DISCLAIMER, LOG_PRIVACY } from "@/lib/labor/copy";
 import { hapticsAreVisualOnly } from "@/lib/labor/haptics";
 import { useLaborStore } from "@/lib/labor/store";
@@ -294,10 +295,16 @@ function ToggleRow({
   checked: boolean;
   onChange: (v: boolean) => void;
 }) {
+  const labelId = useId();
   return (
-    <div className="flex min-h-14 items-center justify-between gap-3 rounded-2xl bg-surface px-4">
-      <span className="text-[17px]">{label}</span>
-      <Toggle label={label} checked={checked} onChange={onChange} />
+    <div
+      className="flex min-h-14 items-center justify-between gap-3 rounded-2xl bg-surface px-4"
+      onClick={() => onChange(!checked)}
+    >
+      <span id={labelId} className="text-[17px]">
+        {label}
+      </span>
+      <Toggle labelledBy={labelId} label={label} checked={checked} onChange={onChange} />
     </div>
   );
 }

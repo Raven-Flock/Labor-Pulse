@@ -16,29 +16,40 @@ export function Toggle({
   checked,
   onChange,
   label,
+  labelledBy,
 }: {
   checked: boolean;
   onChange: (v: boolean) => void;
   label: string;
+  labelledBy?: string;
 }) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
-      aria-label={label}
-      onClick={() => onChange(!checked)}
-      className={cn(
-        "relative h-8 w-14 shrink-0 rounded-full p-1 transition-colors duration-150",
-        checked ? "bg-action" : "bg-raised",
-      )}
+      aria-labelledby={labelledBy}
+      aria-label={labelledBy ? undefined : label}
+      onClick={(e) => {
+        e.stopPropagation();
+        onChange(!checked);
+      }}
+      className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center"
     >
       <span
+        aria-hidden
         className={cn(
-          "block size-6 rounded-full bg-fg transition-transform duration-150",
-          checked ? "translate-x-6 bg-action-fg" : "translate-x-0 bg-muted",
+          "relative flex h-8 w-14 items-center rounded-full p-1",
+          checked ? "bg-action" : "bg-raised shadow-[0_0_0_1px_var(--color-hairline-strong)]",
         )}
-      />
+      >
+        <span
+          className={cn(
+            "block size-6 rounded-full transition-transform duration-150",
+            checked ? "translate-x-6 bg-action-fg" : "translate-x-0 bg-muted",
+          )}
+        />
+      </span>
     </button>
   );
 }
@@ -66,7 +77,7 @@ export function Chip({
       type={onClick ? "button" : undefined}
       onClick={onClick}
       className={cn(
-        "inline-flex min-h-9 items-center rounded-full px-3.5 text-[15px] font-medium tracking-tight",
+        "inline-flex min-h-11 items-center rounded-full px-3.5 text-[15px] font-medium tracking-tight",
         tones[tone],
       )}
     >
@@ -85,14 +96,15 @@ export function Segmented<T extends string>({
   options: { id: T; label: string }[];
 }) {
   return (
-    <div className="flex gap-1 rounded-xl bg-surface p-1">
+    <div className="flex gap-1 rounded-xl bg-surface p-1 shadow-[0_0_0_1px_var(--color-hairline-strong)]">
       {options.map((o) => (
         <button
           key={o.id}
           type="button"
+          aria-pressed={value === o.id}
           onClick={() => onChange(o.id)}
           className={cn(
-            "min-h-10 flex-1 rounded-lg px-2 text-[15px] font-medium",
+            "min-h-11 flex-1 rounded-lg px-2 text-[15px] font-medium",
             value === o.id ? "bg-raised text-fg" : "text-muted",
           )}
         >
@@ -129,6 +141,7 @@ export function Sheet({
         role="dialog"
         aria-modal="true"
         aria-label={title}
+        data-tone={tone === "alert" ? "alert" : undefined}
         className={cn(
           "relative z-10 max-h-[88%] overflow-y-auto rounded-t-2xl px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-4",
           tone === "alert" ? "bg-alert text-alert-fg" : "bg-surface text-fg",
@@ -174,7 +187,7 @@ export function TextInput(props: InputHTMLAttributes<HTMLInputElement>) {
     <input
       {...props}
       className={cn(
-        "min-h-12 rounded-xl bg-raised px-4 text-[17px] text-fg outline-none ring-1 ring-hairline placeholder:text-muted",
+        "min-h-12 rounded-xl bg-raised px-4 text-[17px] text-fg ring-1 ring-hairline placeholder:text-muted",
         props.className,
       )}
     />
@@ -186,7 +199,7 @@ export function TextArea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
     <textarea
       {...props}
       className={cn(
-        "min-h-28 rounded-xl bg-raised px-4 py-3 text-[17px] text-fg outline-none ring-1 ring-hairline placeholder:text-muted",
+        "min-h-28 rounded-xl bg-raised px-4 py-3 text-[17px] text-fg ring-1 ring-hairline placeholder:text-muted",
         props.className,
       )}
     />
